@@ -29,10 +29,6 @@ function App() {
   const history = createBrowserHistory();
 
   useEffect(() => {
-    history.listen((location) => {
-      console.log(`The current URL is ${location.pathname}${location.search}${location.hash}`);
-    });
-
     let page = history.location.pathname.replace("/", "")
 
     if (page) {
@@ -56,7 +52,6 @@ function App() {
 
   function handleSubmit() {
     let game = Math.random().toString(36).substr(2, 5)
-    // localStorage.setItem('game', game);
     database.ref(`games/${game}`).set({status: game});
     history.push(`/${game}`)
     setGameId(game)
@@ -64,8 +59,8 @@ function App() {
 
   return (
     <div className="App">
-      {gameId ? 
-        <GamePage gameObject={gameId} handleSubmit={handleSubmit}/> 
+      {gameId ?
+        <GamePage gameObject={gameId} handleSubmit={handleSubmit}/>
         : <Home handleSubmit={handleSubmit} />}
     </div>
   );

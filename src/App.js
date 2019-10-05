@@ -1,27 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createBrowserHistory } from 'history';
 import database from './firebase';
-
+import Home from './Home';
+import GamePage from './GamePage';
 import './App.css';
-
-function GamePage(props) {
-  return (
-    <div>
-      <h2>Game: {props.gameObject}</h2>
-      <form>
-        <input type="button" value="Create New Game" onClick={props.handleSubmit} />
-      </form>
-    </div>
-  );
-}
-
-function Home(props) {
-  return (
-    <form>
-      <input type="button" value="Create Game" onClick={props.handleSubmit} />
-    </form>
-  );
-}
 
 function App() {
   const [gameId, setGameId] = useState('')
@@ -52,7 +34,7 @@ function App() {
 
   function handleSubmit() {
     let game = Math.random().toString(36).substr(2, 5)
-    database.ref(`games/${game}`).set({status: game});
+    database.ref(`games/${game}`).set({status: "waiting"});
     history.push(`/${game}`)
     setGameId(game)
   }

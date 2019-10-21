@@ -34,7 +34,7 @@ function App() {
 
   function handleSubmit() {
     let game = Math.random().toString(36).substr(2, 5)
-    database.ref(`games/${game}`).set({status: "waiting"});
+    database.ref(`games/${game}`).set({status: "Waiting", gameId: game});
     history.push(`/${game}`)
     setGameId(game)
   }
@@ -42,7 +42,7 @@ function App() {
   return (
     <div className="App">
       {gameId ?
-        <GamePage gameObject={gameId} handleSubmit={handleSubmit}/>
+        <GamePage gameId={gameId} handleSubmit={handleSubmit}/>
         : <Home handleSubmit={handleSubmit} />}
     </div>
   );

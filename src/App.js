@@ -34,7 +34,7 @@ function App() {
 
   function handleSubmit() {
     let game = Math.random().toString(36).substr(2, 5)
-    database.ref(`games/${game}`).set({status: "Waiting", gameId: game});
+    database.ref(`games/${game}`).set({status: "waiting", gameId: game});
     history.push(`/${game}`)
     setGameId(game)
   }

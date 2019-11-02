@@ -25,3 +25,8 @@
   display: flex;
   justify-content: space-between;
 }
+
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+}

@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { createBrowserHistory } from 'history';
 import pickBy from 'lodash/pickBy';
 import sample from 'lodash/sample';
-import { GoPencil } from "react-icons/go";
-import { GoX } from "react-icons/go";
+import { GoPencil, GoClippy, GoX } from "react-icons/go";
 import database from './firebase';
-import Play from './Play'
+import locations from './locations';
+import Play from './Play';
 
 function GamePage(props) {
   const [game, setGame] = useState({});
   const [userId, setUserId] = useState('');
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState('');
+  const [copied, setCopied] = useState(false);
 
   function activeUsers() {
     return game.users && pickBy(game.users, (user) => user.kicked !== true)
@@ -50,7 +51,8 @@ function GamePage(props) {
       database.ref(`games/${props.gameId}`).update({
         status: 'playing',
         spy: sample(Object.keys(activeUsers())),
-      })
+        location: sample(locations()),
+      });
     } else if (game.status === 'playing') {
       database.ref(`games/${props.gameId}`).update({
         status: 'waiting'
@@ -88,41 +90,60 @@ function GamePage(props) {
     }
   }
 
+  function handleCopy() {
+    navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 750)
+  }
+
+  if (!game.users) return('');
+
   return (
     game.status === 'waiting' ? (
       <div className="mt-5">
         <h2>Waiting for players...</h2>
-        {activeUsers() && (
-          <ul className="list-group player-list mt-5">
-            {Object.keys(activeUsers()).map(uid =>
-              <li className="list-group-item" key={uid}>
-                { uid === userId ? 
-                  <EditUsername setUsername={setUsername} username={username} updateUsername={updateUsername}/> 
-                :
-                  <div>
-                    <span>{activeUsers()[uid].username}</span>
-                    <button onClick={() => handleDelete(uid)}>
-                      <GoX />
-                    </button>
-                  </div>
-                }
-              </li>
-            )}
-          </ul>
-        )}
+        <div>
+          <button
+            className="btn btn-secondary mt-4 btn-copy"
+            onClick={handleCopy}
+            disabled={copied}
+          >
+            <span>{copied ? 'Copied!' : 'Copy game link'}</span>
+            <GoClippy className="ml-3"/>
+          </button>
+        </div>
+        <ul className="list-group player-list mt-5">
+          {Object.keys(activeUsers()).map(uid =>
+            <li className="list-group-item" key={uid}>
+              { uid === userId ?
+                <EditUsername setUsername={setUsername} username={username} updateUsername={updateUsername}/>
+              :
+                <div>
+                  <span>{activeUsers()[uid].username}</span>
+                  <button onClick={() => handleDelete(uid)}>
+                    <GoX />
+                  </button>
+                </div>
+              }
+            </li>
+          )}
+        </ul>
         <form className="mt-5">
-          {game.status === 'waiting' && 
+          {game.status === 'waiting' &&
             <button className="btn btn-secondary mr-2" type="button" onClick={props.handleSubmit}>
               Create new game
             </button>
           }
-          <button className="btn btn-primary ml-2" type="button" onClick={updateGameStatus}>
-            {game.status === 'waiting' ? 'Start game' : 'Leave game'}
+          <button
+            className="btn btn-primary ml-2" type="button"
+            onClick={updateGameStatus}
+          >
+            Start Game
           </button>
         </form>
       </div>
     ) : (
-      <Play quit={updateGameStatus} game={game} userId={userId} />
+      <Play quit={updateGameStatus} game={game} userId={userId} activeUsers={activeUsers}/>
     )
   );
 }
@@ -146,12 +167,11 @@ function EditUsername({username, setUsername, updateUsername}) {
       />
     : <div>
         <span>{username}</span>
-        <button onClick={() => setEditingUsername(true)}>
+        <button className="btn btn-default" onClick={() => setEditingUsername(true)}>
           <GoPencil />
         </button>
       </div>
   )
-  
 }
 
 export default GamePage;

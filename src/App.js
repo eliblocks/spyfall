@@ -3,6 +3,7 @@ import { createBrowserHistory } from 'history';
 import database from './firebase';
 import Home from './Home';
 import GamePage from './GamePage';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 function App() {

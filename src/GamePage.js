@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { createBrowserHistory } from 'history';
+import pickBy from 'lodash/pickBy';
+import sample from 'lodash/sample';
+import { GoPencil } from "react-icons/go";
+import { GoX } from "react-icons/go";
 import database from './firebase';
+import Play from './Play'
 
 function GamePage(props) {
   const [game, setGame] = useState({});
   const [userId, setUserId] = useState('');
   const [username, setUsername] = useState('')
+
+  function activeUsers() {
+    return game.users && pickBy(game.users, (user) => user.kicked !== true)
+  }
+
+  const history = createBrowserHistory();
 
   function updateUsername() {
     database.ref(`games/${props.gameId}/users/${userId}`).update({
@@ -13,7 +25,11 @@ function GamePage(props) {
   }
 
   useEffect(() => {
-    console.log(username)
+    if (userId && game.users && game.users[userId].kicked === true) {
+      localStorage.removeItem('userId');
+      return
+    }
+
     addUser()
   });
 
@@ -30,10 +46,15 @@ function GamePage(props) {
   }, [JSON.stringify(game)]);
 
   function updateGameStatus() {
-    if (game && game.status) {
+    if (game.status === 'waiting') {
       database.ref(`games/${props.gameId}`).update({
-        status: game.status === "waiting" ? "playing" : "waiting"
-      });
+        status: 'playing',
+        spy: sample(Object.keys(activeUsers())),
+      })
+    } else if (game.status === 'playing') {
+      database.ref(`games/${props.gameId}`).update({
+        status: 'waiting'
+      })
     }
   }
 
@@ -43,10 +64,13 @@ function GamePage(props) {
     });
   }
 
+  function handleDelete(uid) {
+    database.ref(`games/${props.gameId}/users/${uid}`).update({ kicked: true });
+  }
+
   function addUser() {
     const storedUserId = localStorage.getItem('userId')
     const userIdPersisted = !!(game.users && Object.keys(game.users).includes(storedUserId))
-
 
     if (game.status &&(!storedUserId || !userIdPersisted)) {
       let userId = Math.random().toString(36).substr(2, 5)
@@ -65,34 +89,41 @@ function GamePage(props) {
   }
 
   return (
-    <div>
-      <h2>Game: {props.gameId}</h2>
-      <h4>Status: {game.status}</h4>
-      <h4>User Id: {userId}</h4>
-      <h4>Username: {username}</h4>
-      <h4>Users:</h4>
-      {game.users && (
-        <ul style={{listStyle: 'none'}}>
-          {Object.keys(game.users).map(uid =>
-            <li key={uid}>
-              { uid === userId ? 
-                <EditUsername setUsername={setUsername} username={username} updateUsername={updateUsername}/> 
-              : 
-                game.users[uid].username 
-              }
-            </li>
-          )}
-        </ul>
-      )}
-      <form>
-        <button type="button" onClick={props.handleSubmit}>
-          Create new game
-        </button>
-        <button type="button" onClick={updateGameStatus}>
-          {game.status === 'waiting' ? 'Start game' : 'Leave game'}
-        </button>
-      </form>
-    </div>
+    game.status === 'waiting' ? (
+      <div className="mt-5">
+        <h2>Waiting for players...</h2>
+        {activeUsers() && (
+          <ul className="list-group player-list mt-5">
+            {Object.keys(activeUsers()).map(uid =>
+              <li className="list-group-item" key={uid}>
+                { uid === userId ? 
+                  <EditUsername setUsername={setUsername} username={username} updateUsername={updateUsername}/> 
+                :
+                  <div>
+                    <span>{activeUsers()[uid].username}</span>
+                    <button onClick={() => handleDelete(uid)}>
+                      <GoX />
+                    </button>
+                  </div>
+                }
+              </li>
+            )}
+          </ul>
+        )}
+        <form className="mt-5">
+          {game.status === 'waiting' && 
+            <button className="btn btn-secondary mr-2" type="button" onClick={props.handleSubmit}>
+              Create new game
+            </button>
+          }
+          <button className="btn btn-primary ml-2" type="button" onClick={updateGameStatus}>
+            {game.status === 'waiting' ? 'Start game' : 'Leave game'}
+          </button>
+        </form>
+      </div>
+    ) : (
+      <Play quit={updateGameStatus} game={game} userId={userId} />
+    )
   );
 }
 
@@ -105,15 +136,22 @@ function EditUsername({username, setUsername, updateUsername}) {
   }
 
   return (
-    editingUsername ? 
-      <input 
-        value={username} 
+    editingUsername ?
+      <input
+        class="form-control"
+        placeholder={username} 
         onChange={(e) => setUsername(e.target.value)}
         onBlur={handleUpdateUsername}
-      /> 
-    : 
-      <span onClick={() => setEditingUsername(true)}>{username} (edit)</span>
+        autoFocus
+      />
+    : <div>
+        <span>{username}</span>
+        <button onClick={() => setEditingUsername(true)}>
+          <GoPencil />
+        </button>
+      </div>
   )
+  
 }
 
 export default GamePage;

@@ -5,9 +5,7 @@ function Footer() {
   return(
     <div className="instructions mt-5">
       <div>
-        <Link to="/instructions" >
-          Instructions
-        </Link>
+        <a href="https://www.cryptozoic.com/sites/default/files/icme/u30695/spy_rules_eng_0.pdf">Instructions</a>
       </div>
       <div>
         <a 

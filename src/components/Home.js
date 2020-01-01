@@ -17,7 +17,7 @@ function Home({ createGame }) {
   }
 
   return (
-    <div class="container">
+    <div className="container">
       <h4 className="mt-5">Welcome to Spyfall</h4>
       <button className="btn btn-primary mt-4" onClick={handleSubmit}>
         Create game

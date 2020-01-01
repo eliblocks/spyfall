@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
-import pickBy from 'lodash/pickBy';
 import sample from 'lodash/sample';
-import { GoPencil, GoClippy, GoX } from "react-icons/go";
-import database from './firebase';
-import locations from './locations';
+import { GoPencil, GoClippy } from "react-icons/go";
+import database from '../firebase';
+import LOCATIONS from '../locations';
 import Play from './Play';
 import Footer from './Footer';
 
@@ -12,14 +11,9 @@ function GamePage({ createGame }) {
   const [game, setGame] = useState({});
   const [userId, setUserId] = useState('');
   const [username, setUsername] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false);  
 
   const { gameId } = useParams();
-
-  function activeUsers() {
-    return game.users && pickBy(game.users, (user) => user.kicked !== true)
-  }
-
   const history = useHistory();
 
   function handleCreateGame() {
@@ -34,14 +28,8 @@ function GamePage({ createGame }) {
   }
 
   useEffect(() => {
-    if (userId && game.users && game.users[userId].kicked === true) {
-      localStorage.removeItem('userId');
-      return
-    }
-
     addUser()
   });
-
 
   useEffect(() => {
     database.ref(`games/${gameId}`).once('value', function(snapshot) {
@@ -54,20 +42,20 @@ function GamePage({ createGame }) {
         history.push('/')
       }
     });
-  }, [gameId]);
+  }, [gameId, history]);
 
   useEffect(() => {
     database.ref(`games/${gameId}`).on('value', function(snapshot) {
       setGame(snapshot.val());
     });
-  }, [JSON.stringify(game)]);
+  }, [gameId]);
 
   function updateGameStatus() {
     if (game.status === 'waiting') {
       database.ref(`games/${gameId}`).update({
         status: 'playing',
-        spy: sample(Object.keys(activeUsers())),
-        location: sample(locations()),
+        spy: sample(Object.keys(game.users)),
+        location: sample(LOCATIONS),
       });
     } else if (game.status === 'playing') {
       database.ref(`games/${gameId}`).update({
@@ -76,22 +64,11 @@ function GamePage({ createGame }) {
     }
   }
 
-  function startGame() {
-    database.ref(`games/${gameId}`).update({
-      status: "playing"
-    });
-  }
-
-  function handleDelete(uid) {
-    database.ref(`games/${gameId}/users/${uid}`).update({ kicked: true });
-  }
-
   function addUser() {
     const storedUserId = localStorage.getItem('userId')
     const userIdPersisted = !!(game.users && Object.keys(game.users).includes(storedUserId))
 
     if (game.status && (!storedUserId || !userIdPersisted)) {
-      console.log("adding a user")
       let newUserId = Math.random().toString(36).substr(2, 5)
       const playerNumber = game.users ? Object.keys(game.users).length + 1 : 1
       const newUsername = `Player${playerNumber}`
@@ -130,16 +107,13 @@ function GamePage({ createGame }) {
           </button>
         </div>
         <ul className="list-group player-list mt-5">
-          {Object.keys(activeUsers()).map(uid =>
+          {Object.keys(game.users).map(uid =>
             <li className="list-group-item foo" key={uid}>
               { uid === userId ?
                 <EditUsername setUsername={setUsername} username={username} updateUsername={updateUsername}/>
               :
                 <div>
-                  <span>{activeUsers()[uid].username}</span>
-                  <button onClick={() => handleDelete(uid)}>
-                    <GoX />
-                  </button>
+                  <span>{game.users[uid].username}</span>
                 </div>
               }
             </li>
@@ -165,7 +139,7 @@ function GamePage({ createGame }) {
         <Footer />
       </div>
     ) : (
-      <Play quit={updateGameStatus} game={game} userId={userId} activeUsers={activeUsers}/>
+      <Play quit={updateGameStatus} game={game} userId={userId} />
     )
   );
 }
@@ -181,7 +155,7 @@ function EditUsername({username, setUsername, updateUsername}) {
   return (
     editingUsername ?
       <input
-        class="form-control"
+        className="form-control"
         placeholder={username} 
         onChange={(e) => setUsername(e.target.value)}
         onBlur={handleUpdateUsername}

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import locations from './locations'
+import React from 'react';
+import LOCATIONS from '../locations'
 
-function Play({ game, userId, quit, activeUsers }) {
+function Play({ game, userId, quit }) {
   return (
     <div className="container">
       {game.spy === userId ? 
@@ -14,13 +14,13 @@ function Play({ game, userId, quit, activeUsers }) {
       }
       <h4 className="mt-4 mb-3">Players</h4>
       <div className="row">
-        {Object.keys(activeUsers()).map(uid =>
+        {Object.keys(game.users).map(uid =>
           <div className="list-group-item col-6">{game.users[uid].username}</div>
         )}
       </div>
       <h4 className="mt-4 mb-3">Locations Reference</h4>
-      <div class="row">
-        {locations().map(location =>
+      <div className="row">
+        {LOCATIONS.map(location =>
           <div className="list-group-item col-6">{location}</div>
         )}
       </div>

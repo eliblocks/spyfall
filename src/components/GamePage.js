@@ -38,7 +38,7 @@ function GamePage({ createGame }) {
         setGame(gameData);
         localStorage.setItem('game', gameId)
       } else {
-        localStorage.clearItem('game')
+        localStorage.removeItem('game')
         history.push('/')
       }
     });

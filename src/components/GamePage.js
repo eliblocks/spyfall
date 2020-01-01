@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import sample from 'lodash/sample';
-import { GoPencil, GoClippy } from "react-icons/go";
+import { GoClippy } from "react-icons/go";
 import database from '../firebase';
 import LOCATIONS from '../locations';
 import Play from './Play';
 import Footer from './Footer';
+import EditUsername from './EditUsername';
 
 function GamePage({ createGame }) {
   const [game, setGame] = useState({});
@@ -142,32 +143,6 @@ function GamePage({ createGame }) {
       <Play quit={updateGameStatus} game={game} userId={userId} />
     )
   );
-}
-
-function EditUsername({username, setUsername, updateUsername}) {
-  const [editingUsername, setEditingUsername] = useState(false);
-
-  function handleUpdateUsername() {
-    updateUsername()
-    setEditingUsername(false)
-  }
-
-  return (
-    editingUsername ?
-      <input
-        className="form-control"
-        placeholder={username} 
-        onChange={(e) => setUsername(e.target.value)}
-        onBlur={handleUpdateUsername}
-        autoFocus
-      />
-    : <div>
-        <span>{username}</span>
-        <button className="btn btn-default" onClick={() => setEditingUsername(true)}>
-          <GoPencil />
-        </button>
-      </div>
-  )
 }
 
 export default GamePage;
